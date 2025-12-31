@@ -1,10 +1,11 @@
 import { useStore } from '../lib/store'
 import { supabase } from '../lib/supabase'
+import { format } from 'date-fns'
 import PageHeader from '../components/PageHeader'
 import styles from './Settings.module.css'
 
 export default function Settings({ onShowAuth, showToast }) {
-  const { user, profile, setProfile, setUser } = useStore()
+  const { user, profile, setProfile, setUser, weightEntries, deleteWeightEntry } = useStore()
   
   const handleSignOut = async () => {
     await supabase.auth.signOut()
@@ -32,6 +33,18 @@ export default function Settings({ onShowAuth, showToast }) {
       window.location.reload()
     }
   }
+  
+  const handleDeleteWeight = async (id) => {
+    if (window.confirm('Delete this weight entry?')) {
+      await deleteWeightEntry(id)
+      showToast('Weight deleted')
+    }
+  }
+  
+  // Get recent weight entries
+  const recentWeights = [...weightEntries]
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, 10)
   
   return (
     <div className={styles.page}>
@@ -111,6 +124,45 @@ export default function Settings({ onShowAuth, showToast }) {
             />
           </div>
         </div>
+        
+        <div className={styles.formGroup}>
+          <label className={styles.label}>Daily Water Target (ml)</label>
+          <input
+            type="number"
+            className={styles.input}
+            value={profile.waterTarget}
+            onChange={(e) => setProfile({ waterTarget: Number(e.target.value) })}
+            placeholder="e.g., 2000"
+          />
+        </div>
+      </section>
+      
+      <section className={styles.section}>
+        <div className={styles.sectionTitle}>Weight History</div>
+        
+        {recentWeights.length > 0 ? (
+          <div className={styles.weightList}>
+            {recentWeights.map(entry => (
+              <div key={entry.id} className={styles.weightItem}>
+                <div className={styles.weightInfo}>
+                  <div className={styles.weightValue}>{entry.weight_kg} kg</div>
+                  <div className={styles.weightDate}>
+                    {format(new Date(entry.date), 'MMM d, yyyy')}
+                    {entry.notes && ` · ${entry.notes}`}
+                  </div>
+                </div>
+                <button 
+                  className={styles.weightDeleteBtn}
+                  onClick={() => handleDeleteWeight(entry.id)}
+                >
+                  🗑️
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className={styles.emptyWeights}>No weight entries yet</div>
+        )}
       </section>
       
       <section className={styles.section}>
@@ -132,7 +184,7 @@ export default function Settings({ onShowAuth, showToast }) {
           <div className={styles.logo}>TRKR</div>
           <div className={styles.version}>Version 1.0.0</div>
           <div className={styles.tagline}>Your personal fitness companion</div>
-          <div className={styles.credit}>Created by Tendai — www.cognitoai.co.za </div>
+          <div className={styles.credit}>Created by Tendai — CognitoAI Innovations</div>
         </div>
       </section>
     </div>

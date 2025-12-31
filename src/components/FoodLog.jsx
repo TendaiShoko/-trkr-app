@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { useStore } from '../lib/store'
 import styles from './FoodLog.module.css'
 
 const mealInfo = {
@@ -7,8 +9,28 @@ const mealInfo = {
   snack: { emoji: '🍎', label: 'Snacks' },
 }
 
-export default function FoodLog({ meals, onAddFood }) {
+export default function FoodLog({ meals, onAddFood, showToast }) {
+  const { deleteFoodEntry } = useStore()
+  const [expandedItem, setExpandedItem] = useState(null)
+  const [deleting, setDeleting] = useState(null)
+  
   const hasMeals = Object.values(meals).some(m => m.length > 0)
+  
+  const handleDelete = async (id) => {
+    setDeleting(id)
+    try {
+      await deleteFoodEntry(id)
+      showToast?.('Food deleted')
+    } catch (error) {
+      showToast?.('Failed to delete', 'error')
+    }
+    setDeleting(null)
+    setExpandedItem(null)
+  }
+  
+  const toggleExpand = (id) => {
+    setExpandedItem(expandedItem === id ? null : id)
+  }
   
   if (!hasMeals) {
     return (
@@ -41,14 +63,36 @@ export default function FoodLog({ meals, onAddFood }) {
             </div>
             
             {foods.map(food => (
-              <div key={food.id} className={styles.foodItem}>
-                <div className={styles.foodInfo}>
-                  <span className={styles.foodName}>{food.food_name}</span>
-                  {food.quantity > 1 && (
-                    <span className={styles.foodQty}>× {food.quantity}</span>
-                  )}
+              <div key={food.id} className={styles.foodItemWrapper}>
+                <div 
+                  className={styles.foodItem} 
+                  onClick={() => toggleExpand(food.id)}
+                >
+                  <div className={styles.foodInfo}>
+                    <span className={styles.foodName}>{food.food_name}</span>
+                    {food.quantity > 1 && (
+                      <span className={styles.foodQty}>× {food.quantity}</span>
+                    )}
+                  </div>
+                  <span className={styles.foodCals}>{(food.calories || 0) * (food.quantity || 1)} kcal</span>
                 </div>
-                <span className={styles.foodCals}>{(food.calories || 0) * (food.quantity || 1)} kcal</span>
+                
+                {expandedItem === food.id && (
+                  <div className={styles.foodActions}>
+                    <div className={styles.foodMacros}>
+                      {food.protein && <span>P: {food.protein}g</span>}
+                      {food.carbs && <span>C: {food.carbs}g</span>}
+                      {food.fat && <span>F: {food.fat}g</span>}
+                    </div>
+                    <button 
+                      className={styles.deleteBtn}
+                      onClick={() => handleDelete(food.id)}
+                      disabled={deleting === food.id}
+                    >
+                      {deleting === food.id ? 'Deleting...' : '🗑️ Delete'}
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

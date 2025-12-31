@@ -98,7 +98,7 @@ export default function Home({ onOpenModal, showToast }) {
             + Add
           </button>
         </div>
-        <FoodLog meals={foodByMeal} onAddFood={() => onOpenModal('food')} />
+        <FoodLog meals={foodByMeal} onAddFood={() => onOpenModal('food')} showToast={showToast} />
       </section>
       
       <section className={styles.section}>
@@ -108,7 +108,7 @@ export default function Home({ onOpenModal, showToast }) {
             + Add
           </button>
         </div>
-        <ActivityList workouts={recentWorkouts} />
+        <ActivityList workouts={recentWorkouts} showToast={showToast} />
       </section>
     </div>
   )

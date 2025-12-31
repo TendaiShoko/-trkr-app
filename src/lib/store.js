@@ -13,6 +13,7 @@ export const useStore = create(
         proteinTarget: 150,
         carbsTarget: 250,
         fatTarget: 65,
+        waterTarget: 2000,
       },
       
       // Data
