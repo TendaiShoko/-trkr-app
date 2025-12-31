@@ -166,3 +166,9 @@
   font-size: 14px;
   color: var(--text-secondary);
 }
+
+.credit {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 12px;
+}
