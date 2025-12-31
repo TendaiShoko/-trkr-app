@@ -1,0 +1,846 @@
+# TRKR Development Roadmap
+
+## Complete Technical Specification for Future Phases
+
+---
+
+# Phase 2B: Insights & Weekly Summary
+
+## Feature 1: Weekly Summary Dashboard
+
+### Description
+A summary card on the Home page showing the week's performance at a glance.
+
+### UI Design
+```
+┌─────────────────────────────────────────┐
+│  📊 THIS WEEK                    Dec 25-31│
+├─────────────────────────────────────────┤
+│                                         │
+│   🏋️ 4/5        🔥 12,450      ⚖️ -0.5kg │
+│   workouts      calories       weight   │
+│                                         │
+│   💧 85%        🥗 142g avg             │
+│   water goal    protein                 │
+│                                         │
+│   ████████░░ 80% of goals hit          │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+### Files to Create
+
+#### `src/components/WeeklySummary.jsx` (NEW)
+```jsx
+// Complete new component
+// Imports needed: useStore, date-fns
+// 
+// Functions to implement:
+// - getWeekDateRange() - returns start/end of current week
+// - calculateWeeklyStats() - aggregates all data for the week
+//
+// Data to display:
+// - Workouts completed vs target
+// - Total calories consumed
+// - Weight change (first entry vs last entry of week)
+// - Water goal hit percentage
+// - Average protein per day
+// - Overall goal completion percentage
+```
+
+#### `src/components/WeeklySummary.module.css` (NEW)
+```css
+/* Styles needed:
+ * - .card - main container with gradient border
+ * - .header - week title and date range
+ * - .statsGrid - 2x3 or 3x2 grid for stats
+ * - .statItem - individual stat with icon, value, label
+ * - .progressBar - overall progress indicator
+ */
+```
+
+### Files to Modify
+
+#### `src/pages/Home.jsx`
+**Line ~10:** Add import
+```jsx
+import WeeklySummary from '../components/WeeklySummary'
+```
+
+**Line ~52 (after greeting section):** Add component
+```jsx
+<section className={styles.section}>
+  <WeeklySummary />
+</section>
+```
+
+#### `src/lib/store.js`
+**Line ~380 (after getWeekStats):** Add new helper function
+```javascript
+getWeeklySummary: () => {
+  const today = new Date()
+  const weekStart = new Date(today)
+  weekStart.setDate(today.getDate() - today.getDay() + 1) // Monday
+  weekStart.setHours(0, 0, 0, 0)
+  
+  const weekEnd = new Date(weekStart)
+  weekEnd.setDate(weekStart.getDate() + 6)
+  weekEnd.setHours(23, 59, 59, 999)
+  
+  // Filter data for this week
+  const weekWorkouts = get().workouts.filter(w => {
+    const d = new Date(w.date)
+    return d >= weekStart && d <= weekEnd
+  })
+  
+  const weekFood = get().foodEntries.filter(f => {
+    const d = new Date(f.date)
+    return d >= weekStart && d <= weekEnd
+  })
+  
+  const weekWeight = get().weightEntries.filter(w => {
+    const d = new Date(w.date)
+    return d >= weekStart && d <= weekEnd
+  }).sort((a, b) => new Date(a.date) - new Date(b.date))
+  
+  const weekWater = get().waterIntake.filter(w => {
+    const d = new Date(w.date)
+    return d >= weekStart && d <= weekEnd
+  })
+  
+  // Calculate stats
+  const totalCalories = weekFood.reduce((acc, f) => 
+    acc + (f.calories || 0) * (f.quantity || 1), 0)
+  
+  const totalProtein = weekFood.reduce((acc, f) => 
+    acc + (f.protein || 0) * (f.quantity || 1), 0)
+  
+  const daysWithFood = [...new Set(weekFood.map(f => f.date))].length
+  
+  const weightChange = weekWeight.length >= 2 
+    ? weekWeight[weekWeight.length - 1].weight_kg - weekWeight[0].weight_kg
+    : null
+  
+  const waterGoalDays = weekWater.filter(w => 
+    w.amount >= get().profile.waterTarget).length
+  
+  return {
+    weekStart,
+    weekEnd,
+    workoutsCompleted: weekWorkouts.length,
+    workoutsTarget: get().profile.weeklyWorkoutTarget,
+    totalCalories,
+    avgCalories: daysWithFood > 0 ? Math.round(totalCalories / daysWithFood) : 0,
+    avgProtein: daysWithFood > 0 ? Math.round(totalProtein / daysWithFood) : 0,
+    weightChange,
+    waterGoalDays,
+    totalDays: 7,
+  }
+},
+```
+
+---
+
+## Feature 2: Trend Insights
+
+### Description
+Smart insights that analyze user data and surface patterns.
+
+### UI Design
+```
+┌─────────────────────────────────────────┐
+│  💡 INSIGHTS                            │
+├─────────────────────────────────────────┤
+│                                         │
+│  🔥 You've hit your workout goal 3 of   │
+│     the last 4 weeks. Keep it up!       │
+│                                         │
+│  📉 You tend to eat 200 more calories   │
+│     on weekends.                        │
+│                                         │
+│  💪 Your most consistent workout is     │
+│     morning runs (8 times this month).  │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+### Files to Create
+
+#### `src/components/Insights.jsx` (NEW)
+```jsx
+// Component that generates and displays insights
+//
+// Insight types to implement:
+// 1. Workout consistency - "You hit your goal X of last Y weeks"
+// 2. Calorie patterns - "You eat more on [weekday]"
+// 3. Most common workout - "Your go-to is [workout type]"
+// 4. Weight trend - "You've lost X kg in the last month"
+// 5. Streak detection - "You've logged food for X days straight"
+//
+// Each insight needs:
+// - Icon
+// - Title
+// - Description
+// - Sentiment (positive/neutral/negative)
+```
+
+#### `src/components/Insights.module.css` (NEW)
+
+### Files to Modify
+
+#### `src/lib/store.js`
+**Line ~450 (new function):** Add insights generator
+```javascript
+getInsights: () => {
+  const insights = []
+  const workouts = get().workouts
+  const foodEntries = get().foodEntries
+  const weightEntries = get().weightEntries
+  const profile = get().profile
+  
+  // Insight 1: Workout goal consistency (last 4 weeks)
+  // Loop through last 4 weeks, count how many hit the target
+  
+  // Insight 2: Calorie day-of-week pattern
+  // Group calories by day of week, find highest/lowest
+  
+  // Insight 3: Most common workout type
+  // Count workouts by sport, find most frequent
+  
+  // Insight 4: Weight trend (last 30 days)
+  // Compare first and last weight entry
+  
+  // Insight 5: Logging streak
+  // Count consecutive days with food entries
+  
+  return insights.slice(0, 3) // Return top 3 most relevant
+},
+```
+
+#### `src/pages/Home.jsx`
+**Line ~10:** Add import
+```jsx
+import Insights from '../components/Insights'
+```
+
+**Line ~95 (after food section):** Add component
+```jsx
+<section className={styles.section}>
+  <div className={styles.sectionHeader}>
+    <span className={styles.sectionTitle}>Insights</span>
+  </div>
+  <Insights />
+</section>
+```
+
+---
+
+# Phase 3: Progress Photos
+
+## Feature 3: Progress Photo Tracking
+
+### Description
+Allow users to take and store progress photos to visually track body changes over time.
+
+### UI Design
+```
+Settings Page:
+┌─────────────────────────────────────────┐
+│  📸 PROGRESS PHOTOS                     │
+├─────────────────────────────────────────┤
+│                                         │
+│  [Dec 1]  [Dec 15]  [Dec 31]  [+ Add]  │
+│   📷        📷        📷       ➕       │
+│                                         │
+│  Tap to view full size                  │
+│                                         │
+└─────────────────────────────────────────┘
+
+Photo Viewer Modal:
+┌─────────────────────────────────────────┐
+│  ← Back              Dec 31, 2024       │
+├─────────────────────────────────────────┤
+│                                         │
+│         [  Full Size Photo  ]           │
+│                                         │
+│  Weight: 78.5 kg                        │
+│  Note: "Feeling stronger"               │
+│                                         │
+│  [ ◀ Previous ]    [ Next ▶ ]          │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+### Files to Create
+
+#### `src/components/ProgressPhotos.jsx` (NEW)
+```jsx
+// Features:
+// - Grid of photo thumbnails
+// - Add photo button (opens camera/file picker)
+// - Photo viewer modal
+// - Compare mode (side-by-side)
+// - Delete photo option
+//
+// Technical notes:
+// - Store photos as base64 in localStorage (limited to ~5MB total)
+// - Or use Supabase Storage for cloud sync
+// - Compress images before storing
+```
+
+#### `src/components/ProgressPhotos.module.css` (NEW)
+
+#### `src/components/PhotoViewer.jsx` (NEW)
+```jsx
+// Full-screen photo viewer
+// - Swipe between photos
+// - Pinch to zoom
+// - Show date and weight on that date
+// - Delete option
+```
+
+### Files to Modify
+
+#### `src/lib/store.js`
+**Line ~25 (in initial state):** Add photos array
+```javascript
+progressPhotos: [], // { id, date, imageData, note, weight }
+```
+
+**Line ~250 (new functions):**
+```javascript
+addProgressPhoto: async (photoData) => {
+  const newPhoto = {
+    id: crypto.randomUUID(),
+    date: new Date().toISOString().split('T')[0],
+    imageData: photoData, // base64 string
+    note: '',
+    weight: get().getLatestWeight()?.weight_kg || null,
+    created_at: new Date().toISOString(),
+  }
+  
+  set((state) => ({
+    progressPhotos: [...state.progressPhotos, newPhoto],
+  }))
+  
+  // Optional: sync to Supabase Storage
+  return newPhoto
+},
+
+deleteProgressPhoto: (id) => {
+  set((state) => ({
+    progressPhotos: state.progressPhotos.filter(p => p.id !== id),
+  }))
+},
+
+updateProgressPhotoNote: (id, note) => {
+  set((state) => ({
+    progressPhotos: state.progressPhotos.map(p =>
+      p.id === id ? { ...p, note } : p
+    ),
+  }))
+},
+```
+
+**Line ~400 (in partialize):** Add to persistence
+```javascript
+partialize: (state) => ({
+  // ... existing
+  progressPhotos: state.progressPhotos,
+}),
+```
+
+#### `src/pages/Settings.jsx`
+**Line ~10:** Add import
+```jsx
+import ProgressPhotos from '../components/ProgressPhotos'
+```
+
+**Line ~150 (new section):** Add photos section
+```jsx
+<section className={styles.section}>
+  <div className={styles.sectionTitle}>Progress Photos</div>
+  <ProgressPhotos />
+</section>
+```
+
+---
+
+# Phase 4A: Strava/Garmin Integration
+
+## Feature 4: Fitness Device Sync
+
+### Description
+Auto-import workouts from Strava or Garmin Connect.
+
+### Technical Approach
+
+#### Option A: Strava API (Recommended for MVP)
+- OAuth2 authentication
+- Webhook for new activities
+- Rate limits: 100 requests/15min, 1000/day
+
+#### Option B: Garmin Connect API
+- More complex OAuth
+- Better for serious athletes
+- Requires developer partnership
+
+### Files to Create
+
+#### `src/lib/strava.js` (NEW)
+```javascript
+// Strava API integration
+const STRAVA_CLIENT_ID = import.meta.env.VITE_STRAVA_CLIENT_ID
+const STRAVA_CLIENT_SECRET = import.meta.env.VITE_STRAVA_CLIENT_SECRET
+const REDIRECT_URI = `${window.location.origin}/strava/callback`
+
+export const stravaAuth = {
+  // Generate OAuth URL
+  getAuthUrl: () => {
+    const params = new URLSearchParams({
+      client_id: STRAVA_CLIENT_ID,
+      redirect_uri: REDIRECT_URI,
+      response_type: 'code',
+      scope: 'read,activity:read_all',
+    })
+    return `https://www.strava.com/oauth/authorize?${params}`
+  },
+  
+  // Exchange code for token
+  exchangeToken: async (code) => {
+    const response = await fetch('https://www.strava.com/oauth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_id: STRAVA_CLIENT_ID,
+        client_secret: STRAVA_CLIENT_SECRET,
+        code,
+        grant_type: 'authorization_code',
+      }),
+    })
+    return response.json()
+  },
+  
+  // Refresh expired token
+  refreshToken: async (refreshToken) => { /* ... */ },
+  
+  // Fetch recent activities
+  getActivities: async (accessToken, after) => {
+    const response = await fetch(
+      `https://www.strava.com/api/v3/athlete/activities?after=${after}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    )
+    return response.json()
+  },
+}
+
+// Map Strava activity to TRKR workout
+export const mapStravaActivity = (activity) => ({
+  sport: mapSportType(activity.type), // Run, Ride, Swim -> run, bike, swim
+  name: activity.name,
+  duration_minutes: Math.round(activity.moving_time / 60),
+  distance: activity.distance / 1000, // meters to km
+  date: activity.start_date.split('T')[0],
+  environment: 'outdoor',
+  notes: `Imported from Strava`,
+  strava_id: activity.id,
+})
+```
+
+#### `src/components/StravaConnect.jsx` (NEW)
+```jsx
+// UI for connecting/disconnecting Strava
+// - "Connect Strava" button
+// - Shows connected status
+// - "Sync Now" button
+// - Last sync timestamp
+// - Disconnect option
+```
+
+### Files to Modify
+
+#### `src/lib/store.js`
+**Line ~20 (in profile):**
+```javascript
+stravaTokens: null, // { access_token, refresh_token, expires_at }
+stravaLastSync: null,
+```
+
+**Line ~300 (new functions):**
+```javascript
+setStravaTokens: (tokens) => {
+  set((state) => ({
+    profile: { ...state.profile, stravaTokens: tokens },
+  }))
+},
+
+syncStravaActivities: async () => {
+  const tokens = get().profile.stravaTokens
+  if (!tokens) return
+  
+  // Check if token expired, refresh if needed
+  // Fetch activities since last sync
+  // Map and add each as workout (skip duplicates by strava_id)
+  // Update lastSync timestamp
+},
+```
+
+#### `src/pages/Settings.jsx`
+**Line ~200 (new section):**
+```jsx
+<section className={styles.section}>
+  <div className={styles.sectionTitle}>Connected Apps</div>
+  <StravaConnect />
+</section>
+```
+
+#### `.env.example`
+Add new variables:
+```
+VITE_STRAVA_CLIENT_ID=your_client_id
+VITE_STRAVA_CLIENT_SECRET=your_client_secret
+```
+
+---
+
+# Phase 4B: Premium Tier & Monetization
+
+## Feature 5: Subscription System
+
+### Description
+Paywall certain features behind a monthly/yearly subscription.
+
+### Free vs Premium Features
+
+| Feature | Free | Premium |
+|---------|------|---------|
+| Log food/workouts/weight | ✅ | ✅ |
+| Goals & calorie calculator | ✅ | ✅ |
+| Quick log & templates | ✅ | ✅ |
+| Weekly summary | ✅ | ✅ |
+| Trend insights | 1 insight | Unlimited |
+| Progress photos | 5 photos | Unlimited |
+| Strava/Garmin sync | ❌ | ✅ |
+| Export data (CSV) | ❌ | ✅ |
+| Priority support | ❌ | ✅ |
+
+### Pricing (Suggested)
+- Monthly: $4.99 / R89
+- Yearly: $39.99 / R699 (33% off)
+
+### Technical Approach
+
+#### Option A: RevenueCat (Recommended)
+- Handles iOS, Android, Web
+- Built-in subscription management
+- Webhook for status updates
+
+#### Option B: Stripe + Custom
+- More control
+- Web-only to start
+- Need to build subscription logic
+
+### Files to Create
+
+#### `src/lib/subscription.js` (NEW)
+```javascript
+// Subscription status and gate
+export const PREMIUM_FEATURES = {
+  UNLIMITED_INSIGHTS: 'unlimited_insights',
+  UNLIMITED_PHOTOS: 'unlimited_photos',
+  STRAVA_SYNC: 'strava_sync',
+  DATA_EXPORT: 'data_export',
+}
+
+export const checkFeatureAccess = (feature, subscription) => {
+  if (!subscription || subscription.status !== 'active') {
+    return false
+  }
+  return true
+}
+
+// Stripe integration
+export const createCheckoutSession = async (priceId) => {
+  // Call your backend to create Stripe checkout session
+  // Return URL to redirect user
+}
+
+export const createPortalSession = async () => {
+  // For managing existing subscription
+}
+```
+
+#### `src/components/PaywallModal.jsx` (NEW)
+```jsx
+// Shown when user tries to access premium feature
+// - Feature explanation
+// - Pricing options
+// - "Start Free Trial" / "Subscribe" button
+// - "Restore Purchase" for existing subscribers
+```
+
+#### `src/components/PremiumBadge.jsx` (NEW)
+```jsx
+// Small badge shown on premium features
+// Clicking opens PaywallModal
+```
+
+### Files to Modify
+
+#### `src/lib/store.js`
+**Line ~20 (in state):**
+```javascript
+subscription: {
+  status: 'free', // 'free', 'trial', 'active', 'cancelled', 'expired'
+  plan: null,     // 'monthly', 'yearly'
+  expiresAt: null,
+  customerId: null,
+},
+```
+
+**Line ~350 (new functions):**
+```javascript
+setSubscription: (subscription) => set({ subscription }),
+
+isPremium: () => {
+  const sub = get().subscription
+  return sub.status === 'active' || sub.status === 'trial'
+},
+
+canAccessFeature: (feature) => {
+  if (get().isPremium()) return true
+  
+  // Check free tier limits
+  switch (feature) {
+    case 'insights':
+      return get().getInsights().length <= 1
+    case 'photos':
+      return get().progressPhotos.length < 5
+    default:
+      return false
+  }
+},
+```
+
+#### `src/components/Insights.jsx`
+**Line ~50 (after rendering first insight):**
+```jsx
+{!isPremium && insights.length > 1 && (
+  <div className={styles.premiumGate}>
+    <PremiumBadge />
+    <p>Unlock {insights.length - 1} more insights</p>
+  </div>
+)}
+```
+
+---
+
+# Phase 4C: Coach Dashboard
+
+## Feature 6: Multi-Athlete Management
+
+### Description
+Allow coaches to monitor multiple athletes' progress.
+
+### User Roles
+- **Athlete** - Regular user
+- **Coach** - Can view linked athletes
+- **Admin** - Full access (you)
+
+### UI Concept
+```
+Coach Dashboard:
+┌─────────────────────────────────────────┐
+│  👥 MY ATHLETES                         │
+├─────────────────────────────────────────┤
+│                                         │
+│  [Avatar] Tendai M.        ✅ On track  │
+│           4/5 workouts · -0.5kg        │
+│                                         │
+│  [Avatar] Sarah K.         ⚠️ Behind    │
+│           2/5 workouts · +0.2kg        │
+│                                         │
+│  [Avatar] Mike R.          ✅ On track  │
+│           5/5 workouts · -1.0kg        │
+│                                         │
+│  [ + Invite Athlete ]                   │
+│                                         │
+└─────────────────────────────────────────┘
+```
+
+### Database Schema Changes
+
+#### Supabase: New Tables
+```sql
+-- Coach-athlete relationships
+CREATE TABLE coach_athletes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  coach_id UUID REFERENCES auth.users(id),
+  athlete_id UUID REFERENCES auth.users(id),
+  status TEXT DEFAULT 'pending', -- pending, active, declined
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(coach_id, athlete_id)
+);
+
+-- Row Level Security
+ALTER TABLE coach_athletes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Coaches can view their athletes"
+  ON coach_athletes FOR SELECT
+  USING (auth.uid() = coach_id);
+
+CREATE POLICY "Athletes can view their coaches"
+  ON coach_athletes FOR SELECT
+  USING (auth.uid() = athlete_id);
+
+-- Update existing tables to allow coach access
+CREATE POLICY "Coaches can view athlete workouts"
+  ON workouts FOR SELECT
+  USING (
+    user_id = auth.uid() OR
+    user_id IN (
+      SELECT athlete_id FROM coach_athletes 
+      WHERE coach_id = auth.uid() AND status = 'active'
+    )
+  );
+```
+
+### Files to Create
+
+#### `src/pages/CoachDashboard.jsx` (NEW)
+```jsx
+// List of athletes with summary stats
+// Invite new athlete (generates link)
+// Click athlete to see detailed view
+```
+
+#### `src/components/AthleteCard.jsx` (NEW)
+```jsx
+// Summary card for each athlete
+// - Avatar, name
+// - Week's workout count vs target
+// - Weight change
+// - Status indicator (on track / behind / needs attention)
+```
+
+#### `src/components/InviteAthlete.jsx` (NEW)
+```jsx
+// Generate invite link
+// Send via email/SMS/copy link
+// Track pending invites
+```
+
+### Files to Modify
+
+#### `src/lib/store.js`
+**Line ~20:**
+```javascript
+role: 'athlete', // 'athlete', 'coach', 'admin'
+linkedAthletes: [],
+linkedCoaches: [],
+```
+
+#### `src/App.jsx`
+**Line ~80 (in renderPage):**
+```jsx
+case 'coach':
+  return <CoachDashboard />
+```
+
+#### `src/components/BottomNav.jsx`
+```jsx
+// Conditionally show coach tab if role === 'coach'
+{ role === 'coach' && (
+  { id: 'coach', label: 'Athletes', icon: '...' }
+)}
+```
+
+---
+
+# Implementation Priority
+
+## Recommended Order
+
+### Week 1-2: Phase 2B
+1. ✅ Weekly Summary component
+2. ✅ Insights component
+3. ✅ Store helper functions
+
+### Week 3-4: Progress Photos
+1. ✅ Photo capture/upload
+2. ✅ Photo gallery
+3. ✅ Photo viewer with compare
+
+### Week 5-6: Strava Integration
+1. ✅ OAuth flow
+2. ✅ Activity sync
+3. ✅ Duplicate detection
+
+### Week 7-8: Premium & Payments
+1. ✅ Stripe integration
+2. ✅ Paywall components
+3. ✅ Feature gating
+
+### Week 9-10: Coach Dashboard
+1. ✅ Database schema
+2. ✅ Invite system
+3. ✅ Dashboard UI
+
+---
+
+# Environment Variables Needed
+
+```env
+# Current
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+
+# Phase 4A: Strava
+VITE_STRAVA_CLIENT_ID=your_client_id
+VITE_STRAVA_CLIENT_SECRET=your_client_secret
+
+# Phase 4B: Payments
+VITE_STRIPE_PUBLISHABLE_KEY=pk_live_xxx
+STRIPE_SECRET_KEY=sk_live_xxx (backend only)
+STRIPE_WEBHOOK_SECRET=whsec_xxx (backend only)
+```
+
+---
+
+# Testing Checklist
+
+## Phase 2B
+- [ ] Weekly summary shows correct data
+- [ ] Summary updates when new data added
+- [ ] Insights generate correctly
+- [ ] Insights refresh periodically
+
+## Progress Photos
+- [ ] Camera capture works
+- [ ] File upload works
+- [ ] Photos persist after refresh
+- [ ] Photos can be deleted
+- [ ] Weight auto-attached to photo
+
+## Strava
+- [ ] OAuth flow completes
+- [ ] Activities import correctly
+- [ ] Duplicates prevented
+- [ ] Token refresh works
+
+## Premium
+- [ ] Paywall appears for gated features
+- [ ] Checkout flow works
+- [ ] Subscription status updates
+- [ ] Feature unlock after payment
+
+## Coach
+- [ ] Invite link generates
+- [ ] Athlete can accept invite
+- [ ] Coach sees athlete data
+- [ ] Privacy respected (coach only sees what's shared)
+
+---
+
+*TRKR Development Roadmap — Created December 31, 2024*
+*Tendai — CognitoAI Innovations*
