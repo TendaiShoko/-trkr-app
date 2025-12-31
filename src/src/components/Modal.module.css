@@ -1,0 +1,458 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+}
+
+.modal {
+  background: var(--bg-secondary);
+  width: 100%;
+  max-width: 430px;
+  max-height: 90vh;
+  border-radius: 24px 24px 0 0;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+}
+
+.header {
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg-secondary);
+  z-index: 10;
+}
+
+.title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: 1px;
+}
+
+.closeBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.closeBtn:hover {
+  background: var(--bg-elevated);
+}
+
+.closeBtn svg {
+  width: 18px;
+  height: 18px;
+  stroke: var(--text-secondary);
+}
+
+.body {
+  padding: 24px;
+}
+
+/* Add Menu */
+.addMenu {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 24px;
+}
+
+.addMenuItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.addMenuItem:hover {
+  border-color: var(--accent-orange);
+  transform: translateY(-4px);
+}
+
+.addMenuIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+
+.addMenuIcon.green { background: linear-gradient(135deg, #22c55e, #16a34a); }
+.addMenuIcon.orange { background: linear-gradient(135deg, #ff6b35, #f7931e); }
+.addMenuIcon.blue { background: linear-gradient(135deg, #4ecdc4, #44a08d); }
+.addMenuIcon.purple { background: linear-gradient(135deg, #a855f7, #7c3aed); }
+
+.addMenuLabel {
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+/* Form Elements */
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.input {
+  width: 100%;
+  padding: 16px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  transition: all 0.2s ease;
+}
+
+.input:focus {
+  border-color: var(--accent-orange);
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.weightInput {
+  width: 100%;
+  padding: 24px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 48px;
+  text-align: center;
+  letter-spacing: 4px;
+  transition: all 0.2s ease;
+}
+
+.weightInput:focus {
+  border-color: var(--accent-orange);
+}
+
+.weightInput::placeholder {
+  color: var(--text-muted);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.formRow3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+/* Selectors */
+.selector {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.sportSelector {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.selectorItem,
+.sportItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 8px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.selectorItem:hover,
+.sportItem:hover {
+  border-color: var(--text-muted);
+}
+
+.selectorItem.active,
+.sportItem.active {
+  border-color: var(--accent-orange);
+  background: rgba(255, 107, 53, 0.1);
+}
+
+.selectorIcon {
+  font-size: 24px;
+}
+
+.selectorLabel {
+  font-size: 11px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.selectorItem.active .selectorLabel,
+.sportItem.active .selectorLabel {
+  color: var(--accent-orange);
+}
+
+/* Toggle */
+.toggleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  margin-bottom: 20px;
+}
+
+.toggleLabel {
+  font-size: 14px;
+}
+
+.toggle {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  background: var(--bg-elevated);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.toggle.active {
+  background: var(--accent-orange);
+}
+
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.toggle.active::after {
+  left: 27px;
+}
+
+.templateHint {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border-radius: var(--radius-xs);
+  margin-bottom: 16px;
+  margin-top: -8px;
+}
+
+/* Submit Button */
+.submitBtn {
+  width: 100%;
+  padding: 18px;
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-yellow));
+  border: none;
+  border-radius: var(--radius-sm);
+  color: white;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 8px;
+}
+
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(255, 107, 53, 0.4);
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Search Results */
+.searching {
+  padding: 12px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.searchToggle {
+  width: 100%;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 16px;
+}
+
+.searchToggle:hover {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.searchSection {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.searchRow {
+  display: flex;
+  gap: 8px;
+}
+
+.searchRow .input {
+  flex: 1;
+}
+
+.searchBtn {
+  padding: 0 20px;
+  background: var(--accent-orange);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.searchBtn:hover:not(:disabled) {
+  background: var(--accent-yellow);
+}
+
+.searchBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.searchResults,
+.recentFoods {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-top: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.searchSection .searchResults {
+  border: none;
+  margin-top: 12px;
+}
+
+.searchEmpty {
+  text-align: center;
+  padding: 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.recentTitle {
+  padding: 12px 16px 8px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+}
+
+.searchItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.searchItem:hover {
+  background: var(--bg-elevated);
+}
+
+.searchItem:not(:last-child) {
+  border-bottom: 1px solid var(--border);
+}
+
+.searchName {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.searchBrand {
+  color: var(--text-muted);
+}
+
+.searchCals {
+  font-size: 13px;
+  color: var(--text-secondary);
+}

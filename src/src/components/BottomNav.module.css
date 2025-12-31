@@ -1,0 +1,79 @@
+.nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  padding: 12px 24px 28px;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 100;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: transparent;
+  border: none;
+}
+
+.item:hover {
+  background: var(--bg-card);
+}
+
+.item.active svg {
+  stroke: var(--accent-orange);
+}
+
+.item.active span {
+  color: var(--accent-orange);
+}
+
+.item svg {
+  width: 24px;
+  height: 24px;
+  stroke: var(--text-muted);
+}
+
+.item span {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.addBtn {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-yellow));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: -30px;
+  box-shadow: 0 4px 20px rgba(255, 107, 53, 0.4);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.addBtn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 6px 30px rgba(255, 107, 53, 0.5);
+}
+
+.addBtn svg {
+  width: 28px;
+  height: 28px;
+  stroke: white;
+}

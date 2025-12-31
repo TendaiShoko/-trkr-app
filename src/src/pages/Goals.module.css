@@ -1,0 +1,349 @@
+.page {
+  padding-bottom: 120px;
+}
+
+.section {
+  padding: 0 20px;
+  margin-bottom: 32px;
+}
+
+.sectionTitle {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.sectionDesc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+/* Progress Cards */
+.progressCards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.progressCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.progressIcon {
+  font-size: 32px;
+}
+
+.progressInfo {
+  flex: 1;
+}
+
+.progressLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.progressValue {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  margin-bottom: 8px;
+}
+
+.progressBar {
+  height: 6px;
+  background: var(--bg-elevated);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-orange), var(--accent-yellow));
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.progressFill.workout {
+  background: linear-gradient(90deg, var(--accent-blue), #44a08d);
+}
+
+/* Form Elements */
+.formGroup {
+  margin-bottom: 16px;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.input {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+}
+
+.input:focus {
+  border-color: var(--accent-orange);
+  outline: none;
+}
+
+/* Goal Summary */
+.goalSummary {
+  background: rgba(255, 107, 53, 0.1);
+  border: 1px solid var(--accent-orange);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  font-size: 14px;
+  color: var(--accent-orange);
+  margin-bottom: 16px;
+}
+
+.weeksEstimate {
+  color: var(--text-secondary);
+}
+
+/* Option Grid (for pace) */
+.optionGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.optionCard {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.optionCard:hover {
+  border-color: var(--text-muted);
+}
+
+.optionCard.active {
+  border-color: var(--accent-orange);
+  background: rgba(255, 107, 53, 0.1);
+}
+
+.optionCard .optionLabel {
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.optionCard .optionDesc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.optionCard.active .optionLabel {
+  color: var(--accent-orange);
+}
+
+/* Option List (for activity level) */
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.optionRow {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.optionRow:hover {
+  border-color: var(--text-muted);
+}
+
+.optionRow.active {
+  border-color: var(--accent-orange);
+  background: rgba(255, 107, 53, 0.05);
+}
+
+.optionRow .optionLabel {
+  font-weight: 600;
+  flex: 1;
+}
+
+.optionRow .optionDesc {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.checkmark {
+  color: var(--accent-orange);
+  font-weight: bold;
+}
+
+/* Toggle */
+.toggleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+
+.toggleLabel {
+  font-weight: 500;
+}
+
+.toggleDesc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.toggle {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  background: var(--bg-elevated);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  flex-shrink: 0;
+}
+
+.toggle.active {
+  background: var(--accent-orange);
+}
+
+.toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  background: white;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.toggle.active::after {
+  left: 27px;
+}
+
+/* Calculated Calories Display */
+.calculatedCalories {
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.1), rgba(251, 191, 36, 0.1));
+  border: 1px solid var(--accent-orange);
+  border-radius: var(--radius);
+  padding: 24px;
+  text-align: center;
+}
+
+.calorieValue {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 48px;
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-yellow));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.calorieLabel {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Frequency Selector */
+.frequencySelector {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.frequencyBtn {
+  flex: 1;
+  padding: 16px;
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.frequencyBtn:hover {
+  border-color: var(--text-muted);
+}
+
+.frequencyBtn.active {
+  border-color: var(--accent-orange);
+  background: rgba(255, 107, 53, 0.1);
+  color: var(--accent-orange);
+}
+
+.frequencyLabel {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* Save Button */
+.saveBtn {
+  display: block;
+  width: calc(100% - 40px);
+  margin: 0 20px;
+  padding: 18px;
+  background: linear-gradient(135deg, var(--accent-orange), var(--accent-yellow));
+  border: none;
+  border-radius: var(--radius-sm);
+  color: white;
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.saveBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(255, 107, 53, 0.4);
+}
