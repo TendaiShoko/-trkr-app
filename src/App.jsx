@@ -7,6 +7,7 @@ import Home from './pages/Home'
 import Calendar from './pages/Calendar'
 import Trends from './pages/Trends'
 import Settings from './pages/Settings'
+import Goals from './pages/Goals'
 
 // Components
 import BottomNav from './components/BottomNav'
@@ -14,6 +15,7 @@ import AddModal from './components/AddModal'
 import LogFoodModal from './components/LogFoodModal'
 import LogWorkoutModal from './components/LogWorkoutModal'
 import LogWeightModal from './components/LogWeightModal'
+import QuickLog from './components/QuickLog'
 import Toast from './components/Toast'
 import Auth from './components/Auth'
 
@@ -75,11 +77,13 @@ function App() {
   const renderPage = () => {
     switch (currentPage) {
       case 'home':
-        return <Home onOpenModal={openModal} showToast={showToast} />
+        return <Home onOpenModal={openModal} showToast={showToast} onNavigate={setCurrentPage} />
       case 'calendar':
         return <Calendar onOpenModal={openModal} />
       case 'trends':
         return <Trends />
+      case 'goals':
+        return <Goals onBack={() => setCurrentPage('home')} showToast={showToast} />
       case 'settings':
         return <Settings onShowAuth={() => setShowAuth(true)} showToast={showToast} />
       default:
@@ -135,6 +139,13 @@ function App() {
             closeModal()
             showToast('Weight recorded!')
           }}
+        />
+      )}
+      
+      {modal === 'quick' && (
+        <QuickLog
+          onClose={closeModal}
+          showToast={showToast}
         />
       )}
       

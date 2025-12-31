@@ -2,6 +2,55 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { supabase } from './supabase'
 
+// Calculate BMR using Mifflin-St Jeor equation
+const calculateBMR = (weight, height, age, gender) => {
+  if (gender === 'male') {
+    return 10 * weight + 6.25 * height - 5 * age + 5
+  } else {
+    return 10 * weight + 6.25 * height - 5 * age - 161
+  }
+}
+
+// Activity multipliers
+const activityMultipliers = {
+  sedentary: 1.2,      // Little or no exercise
+  light: 1.375,        // Light exercise 1-3 days/week
+  moderate: 1.55,      // Moderate exercise 3-5 days/week
+  active: 1.725,       // Hard exercise 6-7 days/week
+  athlete: 1.9,        // Very hard exercise, physical job, or training 2x/day
+}
+
+// Calculate daily calories based on goals
+const calculateDailyCalories = (profile) => {
+  const { currentWeight, height, age, gender, activityLevel, targetWeight, goalPace } = profile
+  
+  if (!currentWeight || !height || !age || !gender) return 2000 // Default
+  
+  const bmr = calculateBMR(currentWeight, height, age, gender)
+  const tdee = bmr * (activityMultipliers[activityLevel] || 1.55)
+  
+  // Adjust based on goal
+  if (!targetWeight || targetWeight === currentWeight) {
+    return Math.round(tdee) // Maintain
+  }
+  
+  // Calorie deficit/surplus based on pace
+  // 0.25kg/week = 275 cal deficit, 0.5kg/week = 550 cal, 0.75kg/week = 825 cal
+  const paceDeficits = {
+    slow: 275,
+    moderate: 550,
+    aggressive: 825,
+  }
+  
+  const deficit = paceDeficits[goalPace] || 550
+  
+  if (targetWeight < currentWeight) {
+    return Math.round(tdee - deficit) // Lose weight
+  } else {
+    return Math.round(tdee + deficit) // Gain weight
+  }
+}
+
 export const useStore = create(
   persist(
     (set, get) => ({
@@ -14,6 +63,16 @@ export const useStore = create(
         carbsTarget: 250,
         fatTarget: 65,
         waterTarget: 2000,
+        // Goal settings
+        currentWeight: null,
+        targetWeight: null,
+        height: null,       // in cm
+        age: null,
+        gender: null,       // 'male' or 'female'
+        activityLevel: 'moderate', // sedentary, light, moderate, active, athlete
+        goalPace: 'moderate',      // slow, moderate, aggressive
+        weeklyWorkoutTarget: 5,    // target workouts per week
+        useCalculatedCalories: false, // whether to use calculated or manual calories
       },
       
       // Data
@@ -22,6 +81,7 @@ export const useStore = create(
       weightEntries: [],
       waterIntake: [],
       recentFoods: [],
+      workoutTemplates: [],  // NEW: saved workout templates
       
       // UI state
       currentDate: new Date().toISOString().split('T')[0],
@@ -31,9 +91,79 @@ export const useStore = create(
       // Actions
       setUser: (user) => set({ user }),
       
-      setProfile: (profile) => set({ profile: { ...get().profile, ...profile } }),
+      setProfile: (updates) => {
+        const newProfile = { ...get().profile, ...updates }
+        
+        // Auto-calculate calories if enabled
+        if (newProfile.useCalculatedCalories) {
+          newProfile.dailyCalorieTarget = calculateDailyCalories(newProfile)
+        }
+        
+        set({ profile: newProfile })
+      },
+      
+      // Recalculate calories (call when weight changes)
+      recalculateCalories: () => {
+        const profile = get().profile
+        if (profile.useCalculatedCalories) {
+          const newTarget = calculateDailyCalories(profile)
+          set({ profile: { ...profile, dailyCalorieTarget: newTarget } })
+        }
+      },
       
       setCurrentDate: (date) => set({ currentDate: date }),
+      
+      // Workout Templates
+      addWorkoutTemplate: (template) => {
+        const newTemplate = {
+          ...template,
+          id: crypto.randomUUID(),
+          created_at: new Date().toISOString(),
+        }
+        set((state) => ({
+          workoutTemplates: [...state.workoutTemplates, newTemplate],
+        }))
+        return newTemplate
+      },
+      
+      deleteWorkoutTemplate: (id) => {
+        set((state) => ({
+          workoutTemplates: state.workoutTemplates.filter((t) => t.id !== id),
+        }))
+      },
+      
+      // Quick log from template
+      logFromTemplate: async (templateId) => {
+        const template = get().workoutTemplates.find((t) => t.id === templateId)
+        if (!template) return null
+        
+        const workout = {
+          sport: template.sport,
+          name: template.name,
+          duration_minutes: template.duration_minutes,
+          distance: template.distance,
+          environment: template.environment,
+          date: get().currentDate,
+        }
+        
+        return get().addWorkout(workout)
+      },
+      
+      // Quick re-log food
+      quickLogFood: async (recentFood, meal) => {
+        const entry = {
+          date: get().currentDate,
+          meal: meal || 'snack',
+          food_name: recentFood.food_name,
+          calories: recentFood.calories,
+          protein: recentFood.protein,
+          carbs: recentFood.carbs,
+          fat: recentFood.fat,
+          quantity: 1,
+          unit: recentFood.unit || 'serving',
+        }
+        return get().addFoodEntry(entry)
+      },
       
       // Workouts
       addWorkout: async (workout) => {
@@ -125,6 +255,12 @@ export const useStore = create(
               ...state.recentFoods.slice(0, 19), // Keep last 20
             ],
           }))
+        } else {
+          // Move to top if already exists
+          const updated = [...recentFoods]
+          const [item] = updated.splice(existingIndex, 1)
+          updated.unshift(item)
+          set({ recentFoods: updated })
         }
         
         if (get().user && navigator.onLine) {
@@ -183,6 +319,14 @@ export const useStore = create(
         set((state) => ({
           weightEntries: [...state.weightEntries, newEntry],
         }))
+        
+        // Update current weight in profile and recalculate calories
+        const profile = get().profile
+        if (profile.useCalculatedCalories) {
+          const newProfile = { ...profile, currentWeight: entry.weight_kg }
+          newProfile.dailyCalorieTarget = calculateDailyCalories(newProfile)
+          set({ profile: newProfile })
+        }
         
         if (get().user && navigator.onLine) {
           try {
@@ -317,6 +461,43 @@ export const useStore = create(
         return stats
       },
       
+      getWeekWorkoutCount: () => {
+        const today = new Date()
+        const weekStart = new Date(today)
+        weekStart.setDate(today.getDate() - today.getDay() + 1) // Monday
+        weekStart.setHours(0, 0, 0, 0)
+        
+        return get().workouts.filter(w => new Date(w.date) >= weekStart).length
+      },
+      
+      getGoalProgress: () => {
+        const profile = get().profile
+        const latestWeight = get().getLatestWeight()
+        const weekWorkouts = get().getWeekWorkoutCount()
+        
+        // Weight progress
+        let weightProgress = null
+        if (profile.targetWeight && profile.currentWeight && latestWeight) {
+          const totalToLose = profile.currentWeight - profile.targetWeight
+          const actualLost = profile.currentWeight - latestWeight.weight_kg
+          weightProgress = totalToLose !== 0 ? Math.round((actualLost / totalToLose) * 100) : 100
+        }
+        
+        // Workout progress
+        const workoutProgress = profile.weeklyWorkoutTarget 
+          ? Math.round((weekWorkouts / profile.weeklyWorkoutTarget) * 100)
+          : null
+        
+        return {
+          weightProgress,
+          workoutProgress,
+          weekWorkouts,
+          weeklyWorkoutTarget: profile.weeklyWorkoutTarget,
+          currentWeight: latestWeight?.weight_kg || profile.currentWeight,
+          targetWeight: profile.targetWeight,
+        }
+      },
+      
       getFoodByMeal: (date) => {
         const entries = get().foodEntries.filter((f) => f.date === date)
         return {
@@ -350,6 +531,7 @@ export const useStore = create(
         weightEntries: state.weightEntries,
         waterIntake: state.waterIntake,
         recentFoods: state.recentFoods,
+        workoutTemplates: state.workoutTemplates,
       }),
     }
   )

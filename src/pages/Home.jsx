@@ -8,7 +8,7 @@ import FoodLog from '../components/FoodLog'
 import WaterTracker from '../components/WaterTracker'
 import styles from './Home.module.css'
 
-export default function Home({ onOpenModal, showToast }) {
+export default function Home({ onOpenModal, showToast, onNavigate }) {
   const { profile, currentDate, getTodayStats, getLatestWeight, workouts, foodEntries } = useStore()
   
   const todayStats = getTodayStats()
@@ -42,7 +42,7 @@ export default function Home({ onOpenModal, showToast }) {
   
   return (
     <div className={styles.page}>
-      <Header />
+      <Header onSettings={() => onNavigate?.('settings')} />
       
       <div className={styles.greeting}>
         <p className={styles.greetingText}>{greeting}</p>

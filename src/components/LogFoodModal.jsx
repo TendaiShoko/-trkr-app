@@ -10,6 +10,35 @@ const meals = [
   { id: 'snack', icon: '🍎', label: 'Snack' },
 ]
 
+// Clean and filter food results
+const cleanFoodResults = (results) => {
+  return results
+    .filter(food => {
+      // Must have a name
+      if (!food.name || food.name.trim() === '') return false
+      // Filter out non-Latin characters (keeps English)
+      if (!/^[a-zA-Z0-9\s\-\'\,\.\&\(\)]+$/.test(food.name)) return false
+      // Must have calories
+      if (!food.calories || food.calories <= 0) return false
+      // Name should be reasonable length
+      if (food.name.length > 60) return false
+      return true
+    })
+    .map(food => ({
+      ...food,
+      // Capitalize first letter of each word
+      name: food.name
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
+        .trim(),
+      // Clean up brand
+      brand: food.brand ? food.brand.split(',')[0].trim() : ''
+    }))
+    .slice(0, 8) // Limit results
+}
+
 export default function LogFoodModal({ onClose, onSave }) {
   const { currentDate, addFoodEntry, recentFoods } = useStore()
   
@@ -21,25 +50,19 @@ export default function LogFoodModal({ onClose, onSave }) {
   const [fat, setFat] = useState('')
   const [quantity, setQuantity] = useState('1')
   const [unit, setUnit] = useState('serving')
-  const [quickAdd, setQuickAdd] = useState(false)
+  const [quickAdd, setQuickAdd] = useState(true) // Default to quick add
   
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
-  const [showRecent, setShowRecent] = useState(true)
+  const [showSearch, setShowSearch] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   
-  const handleSearch = async (query) => {
-    setFoodName(query)
-    setShowRecent(false)
-    
-    if (query.length < 2) {
-      setSearchResults([])
-      setShowRecent(true)
-      return
-    }
+  const handleSearch = async () => {
+    if (searchQuery.length < 2) return
     
     setSearching(true)
-    const results = await searchFood(query)
-    setSearchResults(results)
+    const results = await searchFood(searchQuery)
+    setSearchResults(cleanFoodResults(results))
     setSearching(false)
   }
   
@@ -50,7 +73,8 @@ export default function LogFoodModal({ onClose, onSave }) {
     setCarbs(food.carbs.toString())
     setFat(food.fat.toString())
     setSearchResults([])
-    setShowRecent(false)
+    setShowSearch(false)
+    setQuickAdd(false) // Show macros since we have them
   }
   
   const handleSelectRecent = (food) => {
@@ -60,7 +84,6 @@ export default function LogFoodModal({ onClose, onSave }) {
     setCarbs(food.carbs?.toString() || '')
     setFat(food.fat?.toString() || '')
     setUnit(food.unit || 'serving')
-    setShowRecent(false)
   }
   
   const handleSubmit = async () => {
@@ -115,32 +138,13 @@ export default function LogFoodModal({ onClose, onSave }) {
             <input
               type="text"
               className={styles.input}
-              placeholder="Search or enter food name..."
+              placeholder="e.g., Grilled Chicken Breast"
               value={foodName}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setFoodName(e.target.value)}
             />
             
-            {searching && <div className={styles.searching}>Searching...</div>}
-            
-            {searchResults.length > 0 && (
-              <div className={styles.searchResults}>
-                {searchResults.slice(0, 5).map(food => (
-                  <button
-                    key={food.id}
-                    className={styles.searchItem}
-                    onClick={() => handleSelectFood(food)}
-                  >
-                    <div className={styles.searchName}>
-                      {food.name}
-                      {food.brand && <span className={styles.searchBrand}> · {food.brand}</span>}
-                    </div>
-                    <div className={styles.searchCals}>{food.calories} kcal/100g</div>
-                  </button>
-                ))}
-              </div>
-            )}
-            
-            {showRecent && recentFoods.length > 0 && (
+            {/* Recent Foods */}
+            {recentFoods.length > 0 && !foodName && (
               <div className={styles.recentFoods}>
                 <div className={styles.recentTitle}>Recent</div>
                 {recentFoods.slice(0, 5).map((food, i) => (
@@ -157,22 +161,77 @@ export default function LogFoodModal({ onClose, onSave }) {
             )}
           </div>
           
-          <div className={styles.toggleRow}>
-            <span className={styles.toggleLabel}>Quick add (calories only)</span>
-            <button 
-              className={`${styles.toggle} ${quickAdd ? styles.active : ''}`}
-              onClick={() => setQuickAdd(!quickAdd)}
-            />
-          </div>
+          {/* Search Toggle */}
+          <button 
+            className={styles.searchToggle}
+            onClick={() => setShowSearch(!showSearch)}
+          >
+            {showSearch ? '✕ Close Search' : '🔍 Search Food Database'}
+          </button>
+          
+          {/* Search Section */}
+          {showSearch && (
+            <div className={styles.searchSection}>
+              <div className={styles.searchRow}>
+                <input
+                  type="text"
+                  className={styles.input}
+                  placeholder="Search foods..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                />
+                <button 
+                  className={styles.searchBtn}
+                  onClick={handleSearch}
+                  disabled={searching || searchQuery.length < 2}
+                >
+                  {searching ? '...' : 'Search'}
+                </button>
+              </div>
+              
+              {searchResults.length > 0 && (
+                <div className={styles.searchResults}>
+                  {searchResults.map(food => (
+                    <button
+                      key={food.id}
+                      className={styles.searchItem}
+                      onClick={() => handleSelectFood(food)}
+                    >
+                      <div className={styles.searchName}>
+                        {food.name}
+                        {food.brand && <span className={styles.searchBrand}> · {food.brand}</span>}
+                      </div>
+                      <div className={styles.searchCals}>{food.calories} kcal/100g</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+              
+              {searchResults.length === 0 && searchQuery && !searching && (
+                <div className={styles.searchEmpty}>
+                  No results found. Enter details manually below.
+                </div>
+              )}
+            </div>
+          )}
           
           <div className={styles.formGroup}>
-            <label className={styles.label}>Calories</label>
+            <label className={styles.label}>Calories *</label>
             <input
               type="number"
               className={styles.input}
               placeholder="e.g., 350"
               value={calories}
               onChange={(e) => setCalories(e.target.value)}
+            />
+          </div>
+          
+          <div className={styles.toggleRow}>
+            <span className={styles.toggleLabel}>Add macros (protein, carbs, fat)</span>
+            <button 
+              className={`${styles.toggle} ${!quickAdd ? styles.active : ''}`}
+              onClick={() => setQuickAdd(!quickAdd)}
             />
           </div>
           
@@ -232,6 +291,8 @@ export default function LogFoodModal({ onClose, onSave }) {
                 <option value="g">grams</option>
                 <option value="ml">ml</option>
                 <option value="piece">piece</option>
+                <option value="cup">cup</option>
+                <option value="tbsp">tbsp</option>
               </select>
             </div>
           </div>

@@ -37,7 +37,7 @@ const environments = {
 }
 
 export default function LogWorkoutModal({ onClose, onSave }) {
-  const { currentDate, addWorkout } = useStore()
+  const { currentDate, addWorkout, addWorkoutTemplate, workoutTemplates } = useStore()
   
   const [sport, setSport] = useState('run')
   const [name, setName] = useState('')
@@ -45,6 +45,7 @@ export default function LogWorkoutModal({ onClose, onSave }) {
   const [distance, setDistance] = useState('')
   const [environment, setEnvironment] = useState('road')
   const [notes, setNotes] = useState('')
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false)
   
   const handleSportChange = (newSport) => {
     setSport(newSport)
@@ -64,14 +65,24 @@ export default function LogWorkoutModal({ onClose, onSave }) {
     const durationMins = parseDuration(duration)
     if (!durationMins) return
     
-    await addWorkout({
-      date: currentDate,
+    const workoutData = {
       sport,
-      name: name || sport,
+      name: name || `${sport.charAt(0).toUpperCase() + sport.slice(1)} workout`,
       duration_minutes: Math.round(durationMins),
       distance: distance ? Number(distance) : null,
       environment,
       notes,
+    }
+    
+    // Save as template if checked
+    if (saveAsTemplate) {
+      addWorkoutTemplate(workoutData)
+    }
+    
+    // Log the workout
+    await addWorkout({
+      ...workoutData,
+      date: currentDate,
     })
     
     onSave()
@@ -175,6 +186,19 @@ export default function LogWorkoutModal({ onClose, onSave }) {
               onChange={(e) => setNotes(e.target.value)}
             />
           </div>
+          
+          <div className={styles.toggleRow}>
+            <span className={styles.toggleLabel}>💾 Save as template</span>
+            <button 
+              className={`${styles.toggle} ${saveAsTemplate ? styles.active : ''}`}
+              onClick={() => setSaveAsTemplate(!saveAsTemplate)}
+            />
+          </div>
+          {saveAsTemplate && (
+            <div className={styles.templateHint}>
+              This workout will be saved for one-tap logging in Quick Log
+            </div>
+          )}
           
           <button 
             className={styles.submitBtn}

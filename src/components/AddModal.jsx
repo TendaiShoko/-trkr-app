@@ -4,6 +4,7 @@ const options = [
   { id: 'food', icon: '🍽️', label: 'Log Food', color: 'green' },
   { id: 'workout', icon: '🏋️', label: 'Log Workout', color: 'orange' },
   { id: 'weight', icon: '⚖️', label: 'Log Weight', color: 'blue' },
+  { id: 'quick', icon: '⚡', label: 'Quick Log', color: 'purple' },
 ]
 
 export default function AddModal({ onClose, onSelect }) {
