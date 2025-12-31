@@ -1,0 +1,410 @@
+# TRKR Development Session — December 31, 2024
+
+## Complete Summary of All Changes
+
+---
+
+## Phase 1: Polish & Core Improvements
+
+### 1. Delete Functionality
+
+#### Food Entries (FoodLog.jsx)
+- Added tap-to-expand behavior on food items
+- Shows macros (Protein/Carbs/Fat) when expanded
+- Delete button appears when expanded
+- Confirmation before deletion
+- Loading state shows "Deleting..." during async operation
+- Toast notification on successful delete
+- Smooth slide-down animation
+
+**Files changed:**
+- `src/components/FoodLog.jsx`
+- `src/components/FoodLog.module.css`
+
+#### Workouts (ActivityList.jsx)
+- Added tap-to-expand behavior on workout items
+- Shows notes when expanded
+- Delete button appears when expanded
+- Confirmation before deletion
+- Loading state during async operation
+- Toast notification on successful delete
+
+**Files changed:**
+- `src/components/ActivityList.jsx`
+- `src/components/ActivityList.module.css`
+
+#### Weight Entries (Settings.jsx)
+- New "Weight History" section in Settings
+- Shows last 10 weight entries
+- Each entry displays: weight (kg), date, notes
+- Delete button per entry
+- Confirmation before deletion
+
+**Files changed:**
+- `src/pages/Settings.jsx`
+- `src/pages/Settings.module.css`
+
+---
+
+### 2. Water Tracking Improvements
+
+#### Custom Water Target
+- Added `waterTarget` field to profile store (default: 2000ml)
+- Configurable in Settings page
+- WaterTracker reads custom target from profile
+
+#### Custom Water Amounts
+- New "+ Custom" button in WaterTracker
+- Opens prompt for manual amount entry
+- User can add any amount (not just 250ml glasses)
+
+#### UI Improvements
+- Redesigned to 3-button layout: Glass | Custom | Reset
+- Reset button uses rotate icon (↺)
+- Cleaner visual design
+
+**Files changed:**
+- `src/lib/store.js` — Added `waterTarget` to profile
+- `src/components/WaterTracker.jsx` — Custom target + custom amount logic
+- `src/components/WaterTracker.module.css` — New button styles
+- `src/pages/Settings.jsx` — Water target input field
+
+---
+
+### 3. Food Logging Improvements
+
+#### Cleaner Food Search
+- Search is now **optional**, not automatic
+- Manual entry is the primary flow
+- New "🔍 Search Food Database" toggle button
+- Search only triggers on button click or Enter key
+
+#### Food Results Filtering
+- Filters out non-English characters (keeps Latin alphabet only)
+- Filters out items without calories
+- Filters out names longer than 60 characters
+- Limits results to 8 items
+- Properly capitalizes food names (Title Case)
+- Cleans up brand names
+
+#### Better UX Flow
+1. Type food name manually
+2. Enter calories (required)
+3. **Optional:** Toggle "Add macros" for protein/carbs/fat
+4. **Optional:** Click search to look up nutrition info
+
+#### Additional Units
+- Added "cup" and "tbsp" to serving unit options
+
+**Files changed:**
+- `src/components/LogFoodModal.jsx` — Complete rewrite of search logic
+- `src/components/Modal.module.css` — Search toggle and section styles
+
+---
+
+### 4. Home Page Updates
+
+- Passes `showToast` prop to FoodLog and ActivityList
+- Enables toast notifications for delete actions
+
+**Files changed:**
+- `src/pages/Home.jsx`
+
+---
+
+## Phase 2A: Goals, Templates & Quick Log
+
+### 5. Goals System
+
+#### New Goals Page
+- Complete goal configuration interface
+- Accessible via new "Goals" tab in bottom navigation
+
+#### Body Stats Section
+- Current weight (kg)
+- Height (cm)
+- Age
+- Gender (Male/Female)
+
+#### Weight Goal Section
+- Target weight input
+- Goal summary shows: "Lose X kg" or "Gain X kg"
+- Estimated weeks to goal based on pace
+- Goal pace selector:
+  - Slow: 0.25 kg/week
+  - Moderate: 0.5 kg/week
+  - Aggressive: 0.75 kg/week
+
+#### Activity Level Section
+- Sedentary — Little or no exercise
+- Light — 1-3 days/week
+- Moderate — 3-5 days/week
+- Active — 6-7 days/week
+- Athlete — 2x/day training
+
+#### Calorie Calculation
+- Toggle: "Auto-calculate calories"
+- Uses Mifflin-St Jeor equation for BMR
+- Applies activity multiplier for TDEE
+- Adjusts based on weight goal and pace
+- **Auto-updates when you log new weight**
+
+#### Workout Frequency
+- Weekly workout target (3-7 workouts)
+- Visual selector buttons
+
+#### Progress Tracking
+- Weight goal progress bar
+- Weekly workouts progress bar
+- Shows current vs target
+
+**Files created:**
+- `src/pages/Goals.jsx`
+- `src/pages/Goals.module.css`
+
+**Files changed:**
+- `src/lib/store.js` — Added goal fields, calorie calculation functions
+
+---
+
+### 6. Workout Templates
+
+#### Save as Template
+- New toggle in LogWorkoutModal: "💾 Save as template"
+- Hint text explains feature
+- Saves workout configuration for future use
+
+#### Template Data Stored
+- Sport type
+- Workout name
+- Duration
+- Distance (if applicable)
+- Environment/focus
+
+#### Template Management
+- Templates stored in `workoutTemplates` array in store
+- Persisted to localStorage
+- `addWorkoutTemplate()` function
+- `deleteWorkoutTemplate()` function
+- `logFromTemplate()` function for one-tap logging
+
+**Files changed:**
+- `src/components/LogWorkoutModal.jsx` — Save as template toggle
+- `src/components/Modal.module.css` — Template hint style
+- `src/lib/store.js` — Template storage and functions
+
+---
+
+### 7. Quick Log Feature
+
+#### New Quick Log Modal
+- Accessed via + menu → "⚡ Quick Log"
+- Two tabs: Recent Foods | Templates
+
+#### Recent Foods Tab
+- Shows last 10 logged foods
+- Meal selector (Breakfast/Lunch/Dinner/Snack)
+- One-tap to re-log any food
+- Shows food name, calories, protein
+- Loading state during logging
+- Toast notification on success
+
+#### Templates Tab
+- Shows all saved workout templates
+- Displays: sport icon, name, duration, distance
+- One-tap to log workout for today
+- Color-coded icons by sport type
+- Loading state during logging
+- Toast notification on success
+
+**Files created:**
+- `src/components/QuickLog.jsx`
+- `src/components/QuickLog.module.css`
+
+---
+
+### 8. Navigation Updates
+
+#### Bottom Navigation
+- Replaced "Settings" with "Goals"
+- New badge/checkmark icon for Goals tab
+- 5 tabs: Home | Calendar | + | Trends | Goals
+
+#### Header
+- Settings now accessed via gear icon in header
+- Single icon button (removed search and notification)
+
+#### Add Menu
+- Changed from 3-column to 2x2 grid
+- Added "⚡ Quick Log" option with purple color
+- Options: Log Food | Log Workout | Log Weight | Quick Log
+
+**Files changed:**
+- `src/components/BottomNav.jsx` — Goals tab instead of Settings
+- `src/components/Header.jsx` — Settings icon, receives onSettings prop
+- `src/components/AddModal.jsx` — Added Quick Log option
+- `src/components/Modal.module.css` — Purple color, 2x2 grid
+
+---
+
+### 9. App.jsx Updates
+
+- Added Goals page import and route
+- Added QuickLog modal import and handler
+- Home receives `onNavigate` prop for Settings access
+- New modal case for 'quick'
+
+**Files changed:**
+- `src/App.jsx`
+
+---
+
+### 10. Store.js Major Updates
+
+#### New Profile Fields
+```javascript
+profile: {
+  // Existing
+  name: '',
+  dailyCalorieTarget: 2000,
+  proteinTarget: 150,
+  carbsTarget: 250,
+  fatTarget: 65,
+  waterTarget: 2000,
+  
+  // New - Goal settings
+  currentWeight: null,
+  targetWeight: null,
+  height: null,          // in cm
+  age: null,
+  gender: null,          // 'male' or 'female'
+  activityLevel: 'moderate',
+  goalPace: 'moderate',
+  weeklyWorkoutTarget: 5,
+  useCalculatedCalories: false,
+}
+```
+
+#### New Data Arrays
+```javascript
+workoutTemplates: []  // Saved workout templates
+```
+
+#### New Functions
+```javascript
+// Calorie calculation
+calculateBMR(weight, height, age, gender)
+calculateDailyCalories(profile)
+recalculateCalories()
+
+// Templates
+addWorkoutTemplate(template)
+deleteWorkoutTemplate(id)
+logFromTemplate(templateId)
+
+// Quick log
+quickLogFood(recentFood, meal)
+
+// Goal tracking
+getWeekWorkoutCount()
+getGoalProgress()
+```
+
+#### Enhanced Functions
+- `setProfile()` — Auto-recalculates calories if enabled
+- `addWeightEntry()` — Updates currentWeight and recalculates calories
+- `addFoodEntry()` — Moves existing recent foods to top of list
+
+---
+
+## File Summary
+
+### New Files Created (6)
+```
+src/pages/Goals.jsx
+src/pages/Goals.module.css
+src/components/QuickLog.jsx
+src/components/QuickLog.module.css
+CHANGELOG.md
+CHANGELOG-2024-12-31.md
+```
+
+### Files Modified (16)
+```
+src/App.jsx
+src/lib/store.js
+src/pages/Home.jsx
+src/pages/Settings.jsx
+src/pages/Settings.module.css
+src/components/Header.jsx
+src/components/BottomNav.jsx
+src/components/AddModal.jsx
+src/components/FoodLog.jsx
+src/components/FoodLog.module.css
+src/components/ActivityList.jsx
+src/components/ActivityList.module.css
+src/components/WaterTracker.jsx
+src/components/WaterTracker.module.css
+src/components/LogFoodModal.jsx
+src/components/LogWorkoutModal.jsx
+src/components/Modal.module.css
+```
+
+---
+
+## Deployment Packages
+
+1. **trkr-app-phase1.zip** — Delete functionality, water improvements, food search cleanup
+2. **trkr-app-phase1-v2.zip** — Updated food search (Phase 1 final)
+3. **trkr-app-phase2.zip** — Goals, templates, quick log (Phase 2A complete)
+
+---
+
+## Technical Notes
+
+### Calorie Calculation Formula
+
+**BMR (Mifflin-St Jeor):**
+- Male: `10 × weight(kg) + 6.25 × height(cm) - 5 × age + 5`
+- Female: `10 × weight(kg) + 6.25 × height(cm) - 5 × age - 161`
+
+**TDEE = BMR × Activity Multiplier:**
+- Sedentary: 1.2
+- Light: 1.375
+- Moderate: 1.55
+- Active: 1.725
+- Athlete: 1.9
+
+**Goal Adjustment:**
+- Slow (0.25kg/week): ±275 kcal
+- Moderate (0.5kg/week): ±550 kcal
+- Aggressive (0.75kg/week): ±825 kcal
+
+### Data Persistence
+All new data is persisted to localStorage via Zustand persist middleware:
+- `workoutTemplates` array
+- Extended `profile` object with goal fields
+
+---
+
+## What's Next (Phase 2B)
+
+Planned features:
+- Weekly summary (in-app dashboard)
+- Trend insights (basic patterns)
+- Progress visualization improvements
+
+## Future Phases
+
+**Phase 3:**
+- AI-powered workout recommendations
+- Smart meal suggestions
+
+**Phase 4:**
+- Coach dashboard
+- White-label for gyms
+- Premium subscription tier
+
+---
+
+*TRKR — Created by Tendai — CognitoAI Innovations*
