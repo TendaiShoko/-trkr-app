@@ -132,6 +132,7 @@ export default function Settings({ onShowAuth, showToast }) {
           <div className={styles.logo}>TRKR</div>
           <div className={styles.version}>Version 1.0.0</div>
           <div className={styles.tagline}>Your personal fitness companion</div>
+          <div className={styles.credit}>Created by Tendai — www.cognitoai.co.za </div>
         </div>
       </section>
     </div>
